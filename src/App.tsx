@@ -12,6 +12,10 @@ import Intro4 from "./pages/onboarding/Intro4";
 import Intro5 from "./pages/onboarding/Intro5";
 import Intro6 from "./pages/onboarding/Intro6";
 import Intro7 from "./pages/onboarding/Intro7";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import RoleSelection from "./pages/auth/RoleSelection";
+import Settings from "./pages/profile/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +36,14 @@ const App = () => (
           <Route path="/onboarding/intro-5" element={<Intro5 />} />
           <Route path="/onboarding/intro-6" element={<Intro6 />} />
           <Route path="/onboarding/intro-7" element={<Intro7 />} />
+          
+          {/* Authentication Routes */}
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/role-selection" element={<RoleSelection />} />
+          
+          {/* Profile Routes */}
+          <Route path="/profile/settings" element={<Settings />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
