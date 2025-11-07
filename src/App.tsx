@@ -21,6 +21,13 @@ import QRScanner from "./pages/parent/QRScanner";
 import LiveMonitoring from "./pages/parent/LiveMonitoring";
 import DeviceControls from "./pages/parent/DeviceControls";
 import Location from "./pages/parent/Location";
+import ChildDashboard from "./pages/child/Dashboard";
+import QRDisplay from "./pages/child/QRDisplay";
+import Permissions from "./pages/pairing/Permissions";
+import Privacy from "./pages/settings/Privacy";
+import Devices from "./pages/settings/Devices";
+import About from "./pages/help/About";
+import Support from "./pages/help/Support";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +63,21 @@ const App = () => (
           <Route path="/parent/live-monitoring" element={<LiveMonitoring />} />
           <Route path="/parent/device-controls" element={<DeviceControls />} />
           <Route path="/parent/location" element={<Location />} />
+          
+          {/* Child Routes */}
+          <Route path="/child/dashboard" element={<ChildDashboard />} />
+          <Route path="/child/qr-display" element={<QRDisplay />} />
+          
+          {/* Pairing Routes */}
+          <Route path="/pairing/permissions" element={<Permissions />} />
+          
+          {/* Settings Routes */}
+          <Route path="/settings/privacy" element={<Privacy />} />
+          <Route path="/settings/devices" element={<Devices />} />
+          
+          {/* Help Routes */}
+          <Route path="/help/about" element={<About />} />
+          <Route path="/help/support" element={<Support />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
