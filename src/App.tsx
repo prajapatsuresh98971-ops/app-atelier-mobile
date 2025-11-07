@@ -16,6 +16,11 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import RoleSelection from "./pages/auth/RoleSelection";
 import Settings from "./pages/profile/Settings";
+import ParentDashboard from "./pages/parent/Dashboard";
+import QRScanner from "./pages/parent/QRScanner";
+import LiveMonitoring from "./pages/parent/LiveMonitoring";
+import DeviceControls from "./pages/parent/DeviceControls";
+import Location from "./pages/parent/Location";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +49,13 @@ const App = () => (
           
           {/* Profile Routes */}
           <Route path="/profile/settings" element={<Settings />} />
+          
+          {/* Parent Routes */}
+          <Route path="/parent/dashboard" element={<ParentDashboard />} />
+          <Route path="/parent/qr-scanner" element={<QRScanner />} />
+          <Route path="/parent/live-monitoring" element={<LiveMonitoring />} />
+          <Route path="/parent/device-controls" element={<DeviceControls />} />
+          <Route path="/parent/location" element={<Location />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
