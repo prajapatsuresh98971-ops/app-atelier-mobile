@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Intro1 from "./pages/onboarding/Intro1";
@@ -37,7 +39,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
+        <AuthProvider>
+          <Routes>
           <Route path="/" element={<Index />} />
           
           {/* Onboarding Routes */}
@@ -55,25 +58,25 @@ const App = () => (
           <Route path="/auth/role-selection" element={<RoleSelection />} />
           
           {/* Profile Routes */}
-          <Route path="/profile/settings" element={<Settings />} />
+          <Route path="/profile/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           
           {/* Parent Routes */}
-          <Route path="/parent/dashboard" element={<ParentDashboard />} />
-          <Route path="/parent/qr-scanner" element={<QRScanner />} />
-          <Route path="/parent/live-monitoring" element={<LiveMonitoring />} />
-          <Route path="/parent/device-controls" element={<DeviceControls />} />
-          <Route path="/parent/location" element={<Location />} />
+          <Route path="/parent/dashboard" element={<ProtectedRoute requireRole="parent"><ParentDashboard /></ProtectedRoute>} />
+          <Route path="/parent/qr-scanner" element={<ProtectedRoute requireRole="parent"><QRScanner /></ProtectedRoute>} />
+          <Route path="/parent/live-monitoring" element={<ProtectedRoute requireRole="parent"><LiveMonitoring /></ProtectedRoute>} />
+          <Route path="/parent/device-controls" element={<ProtectedRoute requireRole="parent"><DeviceControls /></ProtectedRoute>} />
+          <Route path="/parent/location" element={<ProtectedRoute requireRole="parent"><Location /></ProtectedRoute>} />
           
           {/* Child Routes */}
-          <Route path="/child/dashboard" element={<ChildDashboard />} />
-          <Route path="/child/qr-display" element={<QRDisplay />} />
+          <Route path="/child/dashboard" element={<ProtectedRoute requireRole="child"><ChildDashboard /></ProtectedRoute>} />
+          <Route path="/child/qr-display" element={<ProtectedRoute requireRole="child"><QRDisplay /></ProtectedRoute>} />
           
           {/* Pairing Routes */}
-          <Route path="/pairing/permissions" element={<Permissions />} />
+          <Route path="/pairing/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
           
           {/* Settings Routes */}
-          <Route path="/settings/privacy" element={<Privacy />} />
-          <Route path="/settings/devices" element={<Devices />} />
+          <Route path="/settings/privacy" element={<ProtectedRoute><Privacy /></ProtectedRoute>} />
+          <Route path="/settings/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
           
           {/* Help Routes */}
           <Route path="/help/about" element={<About />} />
@@ -82,6 +85,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

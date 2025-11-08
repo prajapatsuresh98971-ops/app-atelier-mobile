@@ -1,31 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, UserCircle, Baby } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const RoleSelection = () => {
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<"parent" | "child" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { setUserRole, user, role } = useAuth();
 
-  const handleContinue = () => {
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth/login");
+    } else if (role) {
+      navigate(role === "parent" ? "/parent/dashboard" : "/child/dashboard");
+    }
+  }, [user, role, navigate]);
+
+  const handleContinue = async () => {
     if (!selectedRole) return;
-    
+
     setIsLoading(true);
-    // TODO: Store role in Supabase in Phase 5
-    console.log("Selected role:", selectedRole);
-    
-    setTimeout(() => {
-      if (selectedRole === "parent") {
-        navigate("/parent/qr-scanner");
-      } else {
-        navigate("/child/qr-display");
-      }
+    const { error } = await setUserRole(selectedRole);
+
+    if (error) {
+      toast.error(error.message || "Failed to set role");
       setIsLoading(false);
-    }, 500);
+    } else {
+      toast.success("Role set successfully!");
+      navigate(selectedRole === "parent" ? "/parent/dashboard" : "/child/dashboard");
+    }
   };
 
   return (

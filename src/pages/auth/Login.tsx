@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").trim(),
@@ -20,6 +21,15 @@ type LoginForm = z.infer<typeof loginSchema>;
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signInWithGoogle, signInWithApple, user, role } = useAuth();
+
+  useEffect(() => {
+    if (user && role) {
+      navigate(role === "parent" ? "/parent/dashboard" : "/child/dashboard");
+    } else if (user && !role) {
+      navigate("/auth/role-selection");
+    }
+  }, [user, role, navigate]);
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -31,18 +41,27 @@ const Login = () => {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
-    // TODO: Implement Supabase authentication in Phase 5
-    console.log("Login attempt:", data.email);
-    setTimeout(() => {
-      navigate("/auth/role-selection");
+    
+    const { error } = await signIn(data.email, data.password);
+    
+    if (error) {
+      toast.error(error.message || "Failed to sign in");
       setIsLoading(false);
-    }, 1000);
+    } else {
+      toast.success("Signed in successfully!");
+    }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    // TODO: Implement social auth in Phase 5
-    console.log(`Login with ${provider}`);
-    navigate("/auth/role-selection");
+  const handleSocialLogin = async (provider: "google" | "apple") => {
+    try {
+      if (provider === "google") {
+        await signInWithGoogle();
+      } else {
+        await signInWithApple();
+      }
+    } catch (error: any) {
+      toast.error(error.message || `Failed to sign in with ${provider}`);
+    }
   };
 
   return (
@@ -63,6 +82,7 @@ const Login = () => {
               className="w-full"
               onClick={() => handleSocialLogin("google")}
               type="button"
+              disabled={isLoading}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
@@ -89,6 +109,7 @@ const Login = () => {
               className="w-full"
               onClick={() => handleSocialLogin("apple")}
               type="button"
+              disabled={isLoading}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
