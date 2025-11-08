@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { Camera, MapPin, Mic, Monitor, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { usePairing } from "@/hooks/usePairing";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Permission {
   id: string;
@@ -20,6 +23,31 @@ interface Permission {
 const Permissions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, role } = useAuth();
+  const { acceptPairing, isLoading } = usePairing();
+  const [pairingId, setPairingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPendingPairing = async () => {
+      if (!user || role !== 'child') return;
+
+      const { data, error } = await (supabase as any)
+        .from('device_pairings')
+        .select('*')
+        .eq('child_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data && !error) {
+        setPairingId(data.id);
+      }
+    };
+
+    fetchPendingPairing();
+  }, [user, role]);
+
   const [permissions, setPermissions] = useState<Permission[]>([
     {
       id: "camera",
@@ -57,15 +85,29 @@ const Permissions = () => {
     );
   };
 
-  const handleGrantPermissions = () => {
-    const enabledCount = permissions.filter(p => p.enabled).length;
-    
-    toast({
-      title: "Permissions Updated",
-      description: `${enabledCount} permission(s) granted successfully`,
-    });
-    
-    navigate("/child/dashboard");
+  const handleGrantPermissions = async () => {
+    if (!pairingId) {
+      toast({
+        title: "No Pairing Found",
+        description: "Navigating to dashboard",
+      });
+      navigate("/child/dashboard");
+      return;
+    }
+
+    const permissionsObj = {
+      camera: permissions.find(p => p.id === "camera")?.enabled || false,
+      location: permissions.find(p => p.id === "location")?.enabled || false,
+      microphone: permissions.find(p => p.id === "microphone")?.enabled || false,
+      screen_recording: permissions.find(p => p.id === "screen")?.enabled || false,
+    };
+
+    try {
+      await acceptPairing(pairingId, permissionsObj);
+      navigate("/child/dashboard");
+    } catch (error) {
+      console.error('Failed to grant permissions:', error);
+    }
   };
 
   const handleSkip = () => {
@@ -151,8 +193,9 @@ const Permissions = () => {
               onClick={handleGrantPermissions}
               className="flex-1"
               size="lg"
+              disabled={isLoading}
             >
-              Grant Permissions
+              {isLoading ? "Saving..." : "Grant Permissions"}
             </Button>
             <Button
               onClick={handleSkip}

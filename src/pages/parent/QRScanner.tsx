@@ -7,10 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { QrCode, Camera, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePairing } from "@/hooks/usePairing";
 
 export default function QRScanner() {
   const navigate = useNavigate();
+  const { validatePairingCode, isLoading } = usePairing();
   const [manualCode, setManualCode] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handlePairDevice = async () => {
+    if (!manualCode.trim()) return;
+    
+    try {
+      // Remove dashes from the code
+      const cleanCode = manualCode.replace(/-/g, '');
+      await validatePairingCode(cleanCode);
+      setDialogOpen(false);
+      navigate('/pairing/permissions');
+    } catch (error) {
+      console.error('Pairing failed:', error);
+    }
+  };
 
   return (
     <Layout title="Pair Device" showHeader={false}>
@@ -55,7 +72,7 @@ export default function QRScanner() {
                   Position the QR code within the frame
                 </p>
                 
-                <Dialog>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="w-full">
                       Enter Code Manually
@@ -79,7 +96,13 @@ export default function QRScanner() {
                           maxLength={19}
                         />
                       </div>
-                      <Button className="w-full">Pair Device</Button>
+                      <Button 
+                        className="w-full" 
+                        onClick={handlePairDevice}
+                        disabled={isLoading || !manualCode.trim()}
+                      >
+                        {isLoading ? "Pairing..." : "Pair Device"}
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>

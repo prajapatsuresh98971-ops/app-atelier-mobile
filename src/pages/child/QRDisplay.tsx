@@ -4,19 +4,54 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Copy, RefreshCw, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePairing } from "@/hooks/usePairing";
 
 const QRDisplay = () => {
   const { toast } = useToast();
-  const [pairingCode, setPairingCode] = useState("123-456-789-012-345");
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const { generatePairingCode, isLoading } = usePairing();
+  const [pairingCode, setPairingCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
 
   useEffect(() => {
+    const loadPairingCode = async () => {
+      try {
+        const data = await generatePairingCode();
+        // Format the code with dashes
+        const formattedCode = data.pairing_code.match(/.{1,3}/g)?.join('-') || data.pairing_code;
+        setPairingCode(formattedCode);
+        setExpiresAt(data.expires_at);
+      } catch (error) {
+        console.error('Failed to generate pairing code:', error);
+      }
+    };
+
+    loadPairingCode();
+  }, []);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const expires = new Date(expiresAt);
+      const diff = Math.floor((expires.getTime() - now.getTime()) / 1000);
+      return Math.max(0, diff);
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      const remaining = calculateTimeLeft();
+      setTimeLeft(remaining);
+      
+      if (remaining <= 0) {
+        clearInterval(timer);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [expiresAt]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -32,19 +67,20 @@ const QRDisplay = () => {
     });
   };
 
-  const handleRegenerateCode = () => {
-    // Generate new random code
-    const newCode = Array.from({ length: 15 }, () => 
-      Math.floor(Math.random() * 10)
-    ).join('').match(/.{1,3}/g)?.join('-') || '';
-    
-    setPairingCode(newCode);
-    setTimeLeft(300);
-    
-    toast({
-      title: "Code Regenerated",
-      description: "New pairing code has been generated",
-    });
+  const handleRegenerateCode = async () => {
+    try {
+      const data = await generatePairingCode();
+      const formattedCode = data.pairing_code.match(/.{1,3}/g)?.join('-') || data.pairing_code;
+      setPairingCode(formattedCode);
+      setExpiresAt(data.expires_at);
+      
+      toast({
+        title: "Code Regenerated",
+        description: "New pairing code has been generated",
+      });
+    } catch (error) {
+      console.error('Failed to regenerate code:', error);
+    }
   };
 
   return (
@@ -104,10 +140,10 @@ const QRDisplay = () => {
               variant="ghost"
               className="w-full"
               onClick={handleRegenerateCode}
-              disabled={timeLeft > 0}
+              disabled={timeLeft > 0 || isLoading}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Regenerate Code
+              {isLoading ? "Generating..." : "Regenerate Code"}
             </Button>
 
             {/* Instructions */}
