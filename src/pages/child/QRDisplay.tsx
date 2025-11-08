@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Copy, RefreshCw, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePairing } from "@/hooks/usePairing";
+import { useRealtimePairing } from "@/hooks/useRealtimePairing";
+import { QRCodeSVG } from "qrcode.react";
 
 const QRDisplay = () => {
   const { toast } = useToast();
@@ -12,6 +14,13 @@ const QRDisplay = () => {
   const [pairingCode, setPairingCode] = useState("");
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+
+  useRealtimePairing(() => {
+    toast({
+      title: "Pairing Status Updated",
+      description: "Check your dashboard for details",
+    });
+  });
 
   useEffect(() => {
     const loadPairingCode = async () => {
@@ -94,14 +103,21 @@ const QRDisplay = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* QR Code Placeholder */}
+            {/* QR Code Display */}
             <div className="flex justify-center">
-              <div className="w-64 h-64 bg-card border-2 border-border rounded-lg flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <div className="w-48 h-48 mx-auto bg-muted/50 rounded-lg flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">QR Code</p>
+              <div className="p-4 bg-white rounded-lg">
+                {pairingCode ? (
+                  <QRCodeSVG
+                    value={pairingCode.replace(/-/g, '')}
+                    size={256}
+                    level="H"
+                    includeMargin={true}
+                  />
+                ) : (
+                  <div className="w-64 h-64 bg-muted/50 rounded-lg flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">Generating QR Code...</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 

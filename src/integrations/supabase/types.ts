@@ -14,16 +14,209 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_logs: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      device_pairings: {
+        Row: {
+          activated_at: string | null
+          child_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          pairing_code: string
+          parent_id: string
+          permissions: Json | null
+          status: Database["public"]["Enums"]["pairing_status"]
+        }
+        Insert: {
+          activated_at?: string | null
+          child_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          pairing_code: string
+          parent_id: string
+          permissions?: Json | null
+          status?: Database["public"]["Enums"]["pairing_status"]
+        }
+        Update: {
+          activated_at?: string | null
+          child_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          pairing_code?: string
+          parent_id?: string
+          permissions?: Json | null
+          status?: Database["public"]["Enums"]["pairing_status"]
+        }
+        Relationships: []
+      }
+      devices: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          device_name: string
+          device_type: string
+          id: string
+          is_online: boolean
+          last_seen: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          device_name: string
+          device_type: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          device_name?: string
+          device_type?: string
+          id?: string
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      location_history: {
+        Row: {
+          accuracy: number | null
+          address: string | null
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          address?: string | null
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          address?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          profile_picture_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name?: string | null
+          profile_picture_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          profile_picture_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_pairing_code: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "parent" | "child"
+      pairing_status: "pending" | "active" | "rejected" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +343,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["parent", "child"],
+      pairing_status: ["pending", "active", "rejected", "expired"],
+    },
   },
 } as const
