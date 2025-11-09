@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,46 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Clock, Shield, Bell, Navigation } from "lucide-react";
+import { MapView } from "@/components/MapView";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Location() {
   const [locationAlerts, setLocationAlerts] = useState(true);
+  const [currentLocation, setCurrentLocation] = useState({ latitude: 40.7128, longitude: -74.0060 });
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: pairing } = await (supabase as any)
+        .from('device_pairings')
+        .select('child_id')
+        .eq('parent_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (pairing) {
+        const { data: location } = await (supabase as any)
+          .from('location_history')
+          .select('*')
+          .eq('user_id', pairing.child_id)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (location) {
+          setCurrentLocation({
+            latitude: location.latitude,
+            longitude: location.longitude,
+          });
+        }
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   return (
     <Layout title="Location Tracking">
@@ -31,17 +68,13 @@ export default function Location() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="text-center">
-                  <MapPin className="h-16 w-16 text-primary mx-auto mb-2" />
-                  <p className="text-sm font-medium">123 Main Street</p>
-                  <p className="text-xs text-muted-foreground">Last updated: 2 minutes ago</p>
-                </div>
-                {/* Location Pin */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-4 w-4 rounded-full bg-primary animate-ping absolute" />
-                  <div className="h-4 w-4 rounded-full bg-primary relative" />
-                </div>
+              <div className="aspect-video rounded-lg overflow-hidden">
+                <MapView 
+                  latitude={currentLocation.latitude} 
+                  longitude={currentLocation.longitude}
+                  zoom={15}
+                  showMarker={true}
+                />
               </div>
             </CardContent>
           </Card>

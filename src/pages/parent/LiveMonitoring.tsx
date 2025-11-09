@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Monitor, Camera, Circle, Maximize2, PlayCircle, StopCircle } from "lucide-react";
+import { useScreenRecording } from "@/hooks/useScreenRecording";
 
 export default function LiveMonitoring() {
-  const [isRecording, setIsRecording] = useState(false);
+  const { 
+    isRecording, 
+    recordingDuration, 
+    startRecording, 
+    stopRecording, 
+    takeScreenshot 
+  } = useScreenRecording();
 
   return (
     <Layout title="Live Monitoring">
@@ -48,7 +54,7 @@ export default function LiveMonitoring() {
               <div className="flex items-center justify-center gap-3">
                 <Button
                   variant={isRecording ? "destructive" : "default"}
-                  onClick={() => setIsRecording(!isRecording)}
+                  onClick={isRecording ? stopRecording : startRecording}
                   className="flex items-center gap-2"
                 >
                   {isRecording ? (
@@ -63,7 +69,7 @@ export default function LiveMonitoring() {
                     </>
                   )}
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={takeScreenshot}>
                   <Camera className="h-4 w-4 mr-2" />
                   Screenshot
                 </Button>
@@ -72,7 +78,7 @@ export default function LiveMonitoring() {
               {isRecording && (
                 <div className="flex items-center justify-center gap-2 text-sm text-destructive">
                   <Circle className="h-2 w-2 fill-current animate-pulse" />
-                  Recording: 00:45
+                  Recording: {recordingDuration}
                 </div>
               )}
             </CardContent>

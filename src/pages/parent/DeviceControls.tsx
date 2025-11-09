@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,40 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Lock, Unlock, MapPin, Bell, Camera, Mic, Shield, Smartphone } from "lucide-react";
+import { useMediaControls } from "@/hooks/useMediaControls";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DeviceControls() {
   const [screenLocked, setScreenLocked] = useState(false);
-  const [cameraEnabled, setCameraEnabled] = useState(true);
-  const [micEnabled, setMicEnabled] = useState(true);
+  const [childId, setChildId] = useState<string>("");
+  
+  useEffect(() => {
+    const fetchPairedChild = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await (supabase as any)
+        .from('device_pairings')
+        .select('child_id')
+        .eq('parent_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (data) {
+        setChildId(data.child_id);
+      }
+    };
+    fetchPairedChild();
+  }, []);
+
+  const { 
+    cameraEnabled, 
+    micEnabled, 
+    isLoading,
+    toggleCamera, 
+    toggleMicrophone 
+  } = useMediaControls(childId);
 
   return (
     <Layout title="Device Controls">
@@ -162,7 +191,8 @@ export default function DeviceControls() {
                 <Switch
                   id="camera"
                   checked={cameraEnabled}
-                  onCheckedChange={setCameraEnabled}
+                  onCheckedChange={toggleCamera}
+                  disabled={isLoading || !childId}
                 />
               </div>
               <Separator />
@@ -174,7 +204,8 @@ export default function DeviceControls() {
                 <Switch
                   id="microphone"
                   checked={micEnabled}
-                  onCheckedChange={setMicEnabled}
+                  onCheckedChange={toggleMicrophone}
+                  disabled={isLoading || !childId}
                 />
               </div>
             </CardContent>

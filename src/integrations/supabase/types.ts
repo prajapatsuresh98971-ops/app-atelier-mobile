@@ -152,6 +152,36 @@ export type Database = {
         }
         Relationships: []
       }
+      media_records: {
+        Row: {
+          created_at: string
+          duration: number | null
+          file_path: string
+          file_size: number | null
+          id: string
+          media_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: number | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          media_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration?: number | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          media_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
