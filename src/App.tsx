@@ -28,6 +28,8 @@ import QRDisplay from "./pages/child/QRDisplay";
 import Permissions from "./pages/pairing/Permissions";
 import Privacy from "./pages/settings/Privacy";
 import Devices from "./pages/settings/Devices";
+import Geofencing from "./pages/settings/Geofencing";
+import Reports from "./pages/settings/Reports";
 import About from "./pages/help/About";
 import Support from "./pages/help/Support";
 
@@ -77,6 +79,8 @@ const App = () => (
           {/* Settings Routes */}
           <Route path="/settings/privacy" element={<ProtectedRoute><Privacy /></ProtectedRoute>} />
           <Route path="/settings/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
+          <Route path="/settings/geofencing" element={<ProtectedRoute requireRole="parent"><Geofencing /></ProtectedRoute>} />
+          <Route path="/settings/reports" element={<ProtectedRoute requireRole="parent"><Reports /></ProtectedRoute>} />
           
           {/* Help Routes */}
           <Route path="/help/about" element={<About />} />
