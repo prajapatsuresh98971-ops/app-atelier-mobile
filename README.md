@@ -1,73 +1,107 @@
-# Welcome to your Lovable project
-
-## Project info
+# Mobiprotect - Family Digital Safety Platform
 
 **URL**: https://lovable.dev/projects/3d12cb41-e670-4967-a72c-f8a0712cfae1
 
-## How can I edit this code?
+A comprehensive Progressive Web App (PWA) for parental control and family digital safety with modern, futuristic design.
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+### Core Functionality
+- **Device Pairing**: Secure QR code-based pairing between parent and child devices
+- **Real-time Monitoring**: Live screen sharing, activity tracking, and location monitoring
+- **Smart Controls**: Remote screen lock, app restrictions, and media access management
+- **Geofencing**: Create safe zones with custom alerts
+- **Family Chat**: Secure real-time messaging between parents and children
+- **Weekly Reports**: Automated email summaries of activity and usage
+- **Interactive Onboarding**: Step-by-step guided setup for new parents
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3d12cb41-e670-4967-a72c-f8a0712cfae1) and start prompting.
+### Security & Performance
+- **Comprehensive Security**: XSS, CSRF, SQL injection protection with security headers
+- **Performance Monitoring**: Sentry integration for error tracking and analytics
+- **E2E Testing**: Playwright test suite for critical user flows
+- **PWA Optimization**: Offline support, code splitting, and caching strategies
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## 🛠️ Tech Stack
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Vite** - Fast build tool
+- **TypeScript** - Type safety
+- **React 18+** - UI library
+- **Tailwind CSS** - Utility-first styling
+- **Shadcn/UI** - Component library
+- **Supabase** - Backend as a service
+- **Mapbox** - Interactive maps
+- **Sentry** - Error tracking
+- **Playwright** - E2E testing
 
-## How can I deploy this project?
+## 📦 Installation
+
+```sh
+# Clone the repository
+git clone <YOUR_GIT_URL>
+
+# Navigate to project
+cd <YOUR_PROJECT_NAME>
+
+# Install dependencies
+npm i
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run E2E tests
+npx playwright test
+```
+
+## 🎨 Design System
+
+The app features a modern, futuristic dark theme with:
+- **Primary Color**: Blue (#2563EB) - Trust and security
+- **Secondary Color**: Green (#10B981) - Safety and approval
+- **Accent Color**: Amber (#F59E0B) - Alerts and warnings
+- **Glass morphism effects** with backdrop blur
+- **Glow animations** for interactive elements
+
+### Custom CSS Classes
+- `.glass-card` - Glassmorphism effect
+- `.glow-primary` - Primary color glow
+- `.gradient-text` - Gradient text effect
+- `.animate-glow` - Animated glow
+
+## 🔐 Environment Variables
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+VITE_SENTRY_DSN=your_sentry_dsn (optional)
+```
+
+### Supabase Secrets
+Add these in Supabase Dashboard → Settings → Edge Functions:
+- `MAPBOX_PUBLIC_TOKEN`
+- `RESEND_API_KEY`
+
+## 🧪 Testing
+
+Run E2E tests:
+```bash
+npx playwright test              # Run all tests
+npx playwright test --ui         # Run with UI
+npx playwright show-report       # View report
+```
+
+## 🚀 Deployment
 
 Simply open [Lovable](https://lovable.dev/projects/3d12cb41-e670-4967-a72c-f8a0712cfae1) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## 📞 Support
 
-Yes, you can!
+For issues and questions, visit [Lovable Documentation](https://docs.lovable.dev)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Built with ❤️ using React, Supabase, and modern web technologies

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { initSentry } from "@/lib/sentry";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Intro1 from "./pages/onboarding/Intro1";
@@ -19,6 +20,7 @@ import Register from "./pages/auth/Register";
 import RoleSelection from "./pages/auth/RoleSelection";
 import Settings from "./pages/profile/Settings";
 import ParentDashboard from "./pages/parent/Dashboard";
+import ParentOnboarding from "./pages/parent/Onboarding";
 import QRScanner from "./pages/parent/QRScanner";
 import LiveMonitoring from "./pages/parent/LiveMonitoring";
 import DeviceControls from "./pages/parent/DeviceControls";
@@ -32,6 +34,10 @@ import Geofencing from "./pages/settings/Geofencing";
 import Reports from "./pages/settings/Reports";
 import About from "./pages/help/About";
 import Support from "./pages/help/Support";
+import FamilyChat from "./pages/FamilyChat";
+
+// Initialize Sentry
+initSentry();
 
 const queryClient = new QueryClient();
 
@@ -64,6 +70,7 @@ const App = () => (
           
           {/* Parent Routes */}
           <Route path="/parent/dashboard" element={<ProtectedRoute requireRole="parent"><ParentDashboard /></ProtectedRoute>} />
+          <Route path="/parent/onboarding" element={<ProtectedRoute requireRole="parent"><ParentOnboarding /></ProtectedRoute>} />
           <Route path="/parent/qr-scanner" element={<ProtectedRoute requireRole="parent"><QRScanner /></ProtectedRoute>} />
           <Route path="/parent/live-monitoring" element={<ProtectedRoute requireRole="parent"><LiveMonitoring /></ProtectedRoute>} />
           <Route path="/parent/device-controls" element={<ProtectedRoute requireRole="parent"><DeviceControls /></ProtectedRoute>} />
@@ -75,6 +82,9 @@ const App = () => (
           
           {/* Pairing Routes */}
           <Route path="/pairing/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
+          
+          {/* Communication Routes */}
+          <Route path="/family-chat" element={<ProtectedRoute><FamilyChat /></ProtectedRoute>} />
           
           {/* Settings Routes */}
           <Route path="/settings/privacy" element={<ProtectedRoute><Privacy /></ProtectedRoute>} />
