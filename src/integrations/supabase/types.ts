@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      geofences: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          name: string
+          notify_on_enter: boolean
+          notify_on_exit: boolean
+          parent_id: string
+          radius: number
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          notify_on_enter?: boolean
+          notify_on_exit?: boolean
+          parent_id: string
+          radius?: number
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          notify_on_enter?: boolean
+          notify_on_exit?: boolean
+          parent_id?: string
+          radius?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       location_history: {
         Row: {
           accuracy: number | null
@@ -206,6 +251,39 @@ export type Database = {
           name?: string | null
           profile_picture_url?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      report_preferences: {
+        Row: {
+          created_at: string
+          email: string
+          frequency: string
+          id: string
+          is_active: boolean
+          last_sent_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
