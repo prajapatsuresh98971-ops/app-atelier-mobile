@@ -68,17 +68,27 @@ const Register = () => {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     
-    const { error } = await signUp(data.email, data.password, data.name);
-    
-    if (error) {
-      if (error.message.includes("already registered")) {
-        toast.error("This email is already registered. Please sign in instead.");
-      } else {
-        toast.error(error.message || "Failed to create account");
+    try {
+      const { error } = await signUp(data.email, data.password, data.name);
+      
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else if (error.message.includes("Password")) {
+          toast.error("Password must be at least 6 characters long.");
+        } else {
+          toast.error(error.message || "Failed to create account. Please try again.");
+        }
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    } else {
+
       toast.success("Account created! Please check your email to verify your account.");
+      // User will be redirected automatically via AuthContext
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 

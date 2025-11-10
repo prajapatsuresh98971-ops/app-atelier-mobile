@@ -42,13 +42,27 @@ const Login = () => {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     
-    const { error } = await signIn(data.email, data.password);
-    
-    if (error) {
-      toast.error(error.message || "Failed to sign in");
-      setIsLoading(false);
-    } else {
+    try {
+      const { error } = await signIn(data.email, data.password);
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error("Invalid email or password. Please try again.");
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error("Please verify your email before logging in.");
+        } else {
+          toast.error(error.message || "Failed to sign in. Please try again.");
+        }
+        setIsLoading(false);
+        return;
+      }
+
       toast.success("Signed in successfully!");
+      // Navigation happens automatically via AuthContext
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 

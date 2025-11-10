@@ -31,30 +31,61 @@ export default function ParentDashboard() {
     if (!user) return;
 
     try {
-      const { data, error } = await (supabase as any)
+      // First get all active pairings
+      const { data: pairings, error: pairingsError } = await supabase
         .from('device_pairings')
-        .select(`
-          *,
-          child:profiles!device_pairings_child_id_fkey(id, name, email),
-          child_device:devices!devices_user_id_fkey(is_online, last_seen)
-        `)
+        .select('child_id')
         .eq('parent_id', user.id)
         .eq('is_active', true)
         .eq('status', 'active');
 
-      if (error) throw error;
+      if (pairingsError) throw pairingsError;
 
-      const formattedChildren = data?.map((pairing: any) => ({
-        id: pairing.child?.id,
-        name: pairing.child?.name || 'Unknown',
-        email: pairing.child?.email || '',
-        is_online: pairing.child_device?.[0]?.is_online || false,
-        last_seen: pairing.child_device?.[0]?.last_seen || new Date().toISOString(),
-      })) || [];
+      if (!pairings || pairings.length === 0) {
+        setPairedChildren([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const childIds = pairings.map(p => p.child_id);
+
+      // Get profiles for all children
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, email, profile_picture_url')
+        .in('id', childIds);
+
+      if (profilesError) throw profilesError;
+
+      // Get device status for all children
+      const { data: devices, error: devicesError } = await supabase
+        .from('devices')
+        .select('user_id, is_online, last_seen')
+        .in('user_id', childIds);
+
+      if (devicesError) throw devicesError;
+
+      // Combine the data
+      const formattedChildren = profiles?.map((profile: any) => {
+        const device = devices?.find((d: any) => d.user_id === profile.id);
+        return {
+          id: profile.id,
+          name: profile.name || 'Unknown',
+          email: profile.email || '',
+          profile_picture_url: profile.profile_picture_url,
+          is_online: device?.is_online || false,
+          last_seen: device?.last_seen || new Date().toISOString(),
+        };
+      }) || [];
 
       setPairedChildren(formattedChildren);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching paired children:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load paired children. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
