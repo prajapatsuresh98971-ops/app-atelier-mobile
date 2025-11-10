@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const MessageSchema = z.object({
+  message: z.string().trim().min(1, "Message cannot be empty").max(1000, "Message too long"),
+});
 
 export interface ChatMessage {
   id: string;
@@ -100,13 +105,24 @@ export const useChat = (recipientId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Validate message
+      const validation = MessageSchema.safeParse({ message });
+      if (!validation.success) {
+        toast({
+          title: "Invalid Message",
+          description: validation.error.issues[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await (supabase as any)
         .from('chat_messages')
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
           recipient_id: recipientId,
-          message,
+          message: validation.data.message,
         });
 
       if (error) throw error;

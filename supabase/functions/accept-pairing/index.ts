@@ -1,10 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const PermissionsSchema = z.object({
+  camera: z.boolean(),
+  location: z.boolean(),
+  microphone: z.boolean(),
+  screen_recording: z.boolean(),
+});
+
+const RequestSchema = z.object({
+  pairing_id: z.string().uuid(),
+  permissions: PermissionsSchema.optional(),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,12 +25,6 @@ serve(async (req) => {
   }
 
   try {
-    const { pairing_id, permissions } = await req.json();
-
-    if (!pairing_id) {
-      throw new Error('Pairing ID is required');
-    }
-
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -28,15 +35,29 @@ serve(async (req) => {
       }
     );
 
-    // Get the authenticated user (child)
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      throw new Error('Unauthorized');
+      console.error('[accept-pairing] Authentication failed');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Validate input
+    const body = await req.json();
+    const validation = RequestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error('[accept-pairing] Invalid input:', validation.error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { pairing_id, permissions } = validation.data;
 
     // Verify user is a child and owns this pairing
     const { data: pairingData, error: findError } = await supabaseClient
@@ -44,10 +65,14 @@ serve(async (req) => {
       .select('*')
       .eq('id', pairing_id)
       .eq('child_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (findError || !pairingData) {
-      throw new Error('Pairing not found or unauthorized');
+      console.warn('[accept-pairing] Unauthorized access attempt by:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized action' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Update the pairing status and permissions
@@ -68,9 +93,15 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('[accept-pairing] Update failed:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Unable to complete pairing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log('Pairing accepted by child:', user.id);
+    console.log('[accept-pairing] Success for user:', user.id);
 
     return new Response(
       JSON.stringify({
@@ -82,12 +113,11 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error accepting pairing:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('[accept-pairing] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An error occurred' }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

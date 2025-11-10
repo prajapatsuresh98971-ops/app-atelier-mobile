@@ -22,14 +22,14 @@ serve(async (req) => {
       }
     );
 
-    // Get the authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      throw new Error('Unauthorized');
+      console.error('[generate-pairing-code] Authentication failed');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verify user is a child
@@ -37,17 +37,27 @@ serve(async (req) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (roleData?.role !== 'child') {
-      throw new Error('Only children can generate pairing codes');
+      console.warn('[generate-pairing-code] Non-child user attempted generation:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized action' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Generate pairing code using the database function
     const { data: codeData, error: codeError } = await supabaseClient
       .rpc('generate_pairing_code');
 
-    if (codeError) throw codeError;
+    if (codeError) {
+      console.error('[generate-pairing-code] RPC error:', codeError);
+      return new Response(
+        JSON.stringify({ error: 'Unable to generate code' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const pairingCode = codeData;
 
@@ -63,9 +73,15 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (pairingError) throw pairingError;
+    if (pairingError) {
+      console.error('[generate-pairing-code] Database error:', pairingError);
+      return new Response(
+        JSON.stringify({ error: 'Unable to create pairing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log('Generated pairing code:', pairingCode);
+    console.log('[generate-pairing-code] Success for user:', user.id);
 
     return new Response(
       JSON.stringify({
@@ -77,12 +93,11 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error generating pairing code:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('[generate-pairing-code] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An error occurred' }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

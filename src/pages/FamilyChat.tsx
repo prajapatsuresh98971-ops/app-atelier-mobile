@@ -33,50 +33,18 @@ export default function FamilyChat() {
 
     setCurrentUserId(user.id);
 
-    // Get user role
-    const { data: roleData } = await (supabase as any)
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
+    // Use edge function for server-side role verification
+    const { data, error } = await supabase.functions.invoke('get-chat-contacts');
 
-    if (!roleData) return;
+    if (error) {
+      console.error('Error fetching contacts:', error);
+      return;
+    }
 
-    // If parent, get paired children
-    if (roleData.role === 'parent') {
-      const { data: pairings } = await (supabase as any)
-        .from('device_pairings')
-        .select('child_id, profiles!device_pairings_child_id_fkey(name)')
-        .eq('parent_id', user.id)
-        .eq('is_active', true);
-
-      if (pairings) {
-        const formattedContacts = pairings.map((p: any) => ({
-          id: p.child_id,
-          name: p.profiles?.name || 'Child',
-        }));
-        setContacts(formattedContacts);
-        if (formattedContacts.length > 0) {
-          setSelectedContact(formattedContacts[0].id);
-        }
-      }
-    } else {
-      // If child, get paired parents
-      const { data: pairings } = await (supabase as any)
-        .from('device_pairings')
-        .select('parent_id, profiles!device_pairings_parent_id_fkey(name)')
-        .eq('child_id', user.id)
-        .eq('is_active', true);
-
-      if (pairings) {
-        const formattedContacts = pairings.map((p: any) => ({
-          id: p.parent_id,
-          name: p.profiles?.name || 'Parent',
-        }));
-        setContacts(formattedContacts);
-        if (formattedContacts.length > 0) {
-          setSelectedContact(formattedContacts[0].id);
-        }
+    if (data?.contacts) {
+      setContacts(data.contacts);
+      if (data.contacts.length > 0) {
+        setSelectedContact(data.contacts[0].id);
       }
     }
   };

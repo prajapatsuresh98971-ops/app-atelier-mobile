@@ -1,21 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface GeofenceZone {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  radius: number; // in meters
-}
+const GeofenceZoneSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().max(100),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  radius: z.number().positive().max(50000), // Max 50km
+});
+
+const RequestSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  zones: z.array(GeofenceZoneSchema).max(50), // Max 50 zones
+});
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371e3; // Earth's radius in meters
+  const R = 6371e3;
   const φ1 = lat1 * Math.PI / 180;
   const φ2 = lat2 * Math.PI / 180;
   const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -35,12 +42,6 @@ serve(async (req) => {
   }
 
   try {
-    const { latitude, longitude, zones } = await req.json();
-
-    if (!latitude || !longitude || !zones) {
-      throw new Error('latitude, longitude, and zones are required');
-    }
-
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -51,49 +52,69 @@ serve(async (req) => {
       }
     );
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      throw new Error('Unauthorized');
+      console.error('[check-geofence] Authentication failed');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Check each geofence zone
-    const alerts: Array<{ zone: GeofenceZone; status: 'entered' | 'exited'; distance: number }> = [];
+    // Validate input
+    const body = await req.json();
+    const validation = RequestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      console.error('[check-geofence] Invalid input:', validation.error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid geofence data' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    for (const zone of zones as GeofenceZone[]) {
+    const { latitude, longitude, zones } = validation.data;
+
+    const alerts = [];
+
+    for (const zone of zones) {
       const distance = calculateDistance(latitude, longitude, zone.latitude, zone.longitude);
       
       if (distance <= zone.radius) {
-        alerts.push({ zone, status: 'entered', distance });
+        alerts.push({
+          zone,
+          status: 'entered',
+          distance: Math.round(distance),
+        });
+
+        await supabaseClient
+          .from('activity_logs')
+          .insert({
+            user_id: user.id,
+            activity_type: 'geofence_alert',
+            description: `Entered geofence: ${zone.name}`,
+            metadata: { zone_id: zone.id, distance: Math.round(distance) },
+          });
       } else if (distance > zone.radius && distance <= zone.radius + 50) {
-        // 50m buffer zone for "exited" status
-        alerts.push({ zone, status: 'exited', distance });
+        alerts.push({
+          zone,
+          status: 'exited',
+          distance: Math.round(distance),
+        });
+
+        await supabaseClient
+          .from('activity_logs')
+          .insert({
+            user_id: user.id,
+            activity_type: 'geofence_alert',
+            description: `Exited geofence: ${zone.name}`,
+            metadata: { zone_id: zone.id, distance: Math.round(distance) },
+          });
       }
     }
 
-    // Log alerts to activity logs
-    for (const alert of alerts) {
-      await (supabaseClient as any)
-        .from('activity_logs')
-        .insert({
-          user_id: user.id,
-          activity_type: 'geofence_alert',
-          description: `${alert.status === 'entered' ? 'Entered' : 'Exited'} ${alert.zone.name}`,
-          metadata: {
-            zone_id: alert.zone.id,
-            zone_name: alert.zone.name,
-            status: alert.status,
-            distance: alert.distance,
-            latitude,
-            longitude,
-          },
-        });
-    }
-
-    console.log(`Geofence check for user ${user.id}:`, alerts.length, 'alerts');
+    console.log('[check-geofence] Processed for user:', user.id);
 
     return new Response(
       JSON.stringify({
@@ -105,12 +126,11 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in check-geofence:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('[check-geofence] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An error occurred' }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
