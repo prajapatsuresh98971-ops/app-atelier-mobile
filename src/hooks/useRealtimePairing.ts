@@ -2,21 +2,10 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
-interface UseRealtimePairingOptions {
-  onPairingUpdate?: () => void;
-  autoNavigateChild?: boolean;
-}
-
-export const useRealtimePairing = (options?: UseRealtimePairingOptions | (() => void)) => {
+export const useRealtimePairing = (onPairingUpdate?: () => void) => {
   const { toast } = useToast();
   const { user, role } = useAuth();
-  const navigate = useNavigate();
-  
-  // Handle both old callback signature and new options object
-  const onPairingUpdate = typeof options === 'function' ? options : options?.onPairingUpdate;
-  const autoNavigateChild = typeof options === 'object' ? options?.autoNavigateChild : false;
 
   useEffect(() => {
     if (!user) return;
@@ -43,18 +32,6 @@ export const useRealtimePairing = (options?: UseRealtimePairingOptions | (() => 
             }
           } else if (payload.eventType === 'UPDATE') {
             const newRecord = payload.new as any;
-            const oldRecord = payload.old as any;
-            
-            // Child auto-navigation: when parent validates code, child_id is set
-            if (role === 'child' && autoNavigateChild && 
-                newRecord.parent_id && newRecord.parent_id !== oldRecord?.parent_id && 
-                newRecord.status === 'pending') {
-              toast({
-                title: "Pairing Request Received",
-                description: "Redirecting to permissions...",
-              });
-              setTimeout(() => navigate('/pairing/permissions'), 1500);
-            }
             
             if (newRecord.status === 'active' && role === 'parent') {
               toast({
@@ -74,5 +51,5 @@ export const useRealtimePairing = (options?: UseRealtimePairingOptions | (() => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, role, onPairingUpdate, autoNavigateChild, navigate, toast]);
+  }, [user, role, onPairingUpdate, toast]);
 };
