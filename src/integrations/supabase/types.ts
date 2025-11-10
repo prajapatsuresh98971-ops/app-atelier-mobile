@@ -257,6 +257,78 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          activity_updates: boolean
+          browser_notifications: boolean
+          created_at: string
+          device_offline_alerts: boolean
+          geofence_alerts: boolean
+          id: string
+          suspicious_activity_alerts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_updates?: boolean
+          browser_notifications?: boolean
+          created_at?: string
+          device_offline_alerts?: boolean
+          geofence_alerts?: boolean
+          id?: string
+          suspicious_activity_alerts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_updates?: boolean
+          browser_notifications?: boolean
+          created_at?: string
+          device_offline_alerts?: boolean
+          geofence_alerts?: boolean
+          id?: string
+          suspicious_activity_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          priority: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          priority?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          priority?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       onboarding_progress: {
         Row: {
           completed_steps: Json
@@ -347,6 +419,66 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_stats: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_value: number
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_value: number
+          recorded_at?: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_value?: number
+          recorded_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -383,7 +515,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "parent" | "child"
+      app_role: "parent" | "child" | "admin"
       pairing_status: "pending" | "active" | "rejected" | "expired"
     }
     CompositeTypes: {
@@ -512,7 +644,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["parent", "child"],
+      app_role: ["parent", "child", "admin"],
       pairing_status: ["pending", "active", "rejected", "expired"],
     },
   },

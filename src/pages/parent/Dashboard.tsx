@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimePairing } from "@/hooks/useRealtimePairing";
 import { PairedChildCard } from "@/components/PairedChildCard";
+import { DataExportDialog } from "@/components/DataExportDialog";
+import { ParentTutorial } from "@/components/ParentTutorial";
 
 export default function ParentDashboard() {
   const navigate = useNavigate();
@@ -176,6 +178,7 @@ export default function ParentDashboard() {
 
   return (
     <Layout title="Dashboard">
+      <ParentTutorial />
       <div className="min-h-screen bg-background pb-20">
         <div className="container mx-auto p-4 space-y-6">
           {/* Connected Devices */}
@@ -210,14 +213,16 @@ export default function ParentDashboard() {
               ) : (
                 <div className="space-y-4">
                   {pairedChildren.map((child) => (
-                    <PairedChildCard
-                      key={child.id}
-                      child={child}
-                      onViewLocation={() => navigate('/parent/location')}
-                      onViewActivity={() => navigate('/parent/live-monitoring')}
-                      onLockDevice={() => handleDeviceLock(child.id, 'lock')}
-                      onUnlockDevice={() => handleDeviceLock(child.id, 'unlock')}
-                    />
+                    <div key={child.id} className="space-y-3">
+                      <PairedChildCard
+                        child={child}
+                        onViewLocation={() => navigate('/parent/location')}
+                        onViewActivity={() => navigate('/parent/live-monitoring')}
+                        onLockDevice={() => handleDeviceLock(child.id, 'lock')}
+                        onUnlockDevice={() => handleDeviceLock(child.id, 'unlock')}
+                      />
+                      <DataExportDialog childId={child.id} childName={child.name} />
+                    </div>
                   ))}
                 </div>
               )}

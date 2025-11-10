@@ -35,6 +35,7 @@ import Reports from "./pages/settings/Reports";
 import About from "./pages/help/About";
 import Support from "./pages/help/Support";
 import FamilyChat from "./pages/FamilyChat";
+import AdminDashboard from "./pages/admin/Dashboard";
 
 // Initialize Sentry
 initSentry();
@@ -91,6 +92,9 @@ const App = () => (
           <Route path="/settings/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
           <Route path="/settings/geofencing" element={<ProtectedRoute requireRole="parent"><Geofencing /></ProtectedRoute>} />
           <Route path="/settings/reports" element={<ProtectedRoute requireRole="parent"><Reports /></ProtectedRoute>} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           
           {/* Help Routes */}
           <Route path="/help/about" element={<About />} />

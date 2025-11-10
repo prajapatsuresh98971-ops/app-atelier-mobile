@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 interface LayoutProps {
   children: ReactNode;
@@ -85,7 +86,9 @@ export const Layout = ({ children, title = "Mobiprotect", showHeader = true }: L
             
             <h1 className="text-lg font-semibold text-foreground">{title}</h1>
             
-            <DropdownMenu>
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+              <DropdownMenu>
               <DropdownMenuTrigger className="focus:outline-none hover:bg-accent rounded-md p-1 transition-colors">
                 <Menu className="h-6 w-6 text-foreground" />
               </DropdownMenuTrigger>
@@ -113,7 +116,8 @@ export const Layout = ({ children, title = "Mobiprotect", showHeader = true }: L
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
       )}
