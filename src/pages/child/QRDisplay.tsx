@@ -15,15 +15,11 @@ const QRDisplay = () => {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
 
-  // Auto-navigate to permissions when parent validates code
-  useRealtimePairing({
-    autoNavigateChild: true,
-    onPairingUpdate: () => {
-      toast({
-        title: "Pairing Status Updated",
-        description: "Check your dashboard for details",
-      });
-    }
+  useRealtimePairing(() => {
+    toast({
+      title: "Pairing Status Updated",
+      description: "Check your dashboard for details",
+    });
   });
 
   useEffect(() => {
