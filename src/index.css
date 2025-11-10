@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes scan-line {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(300px);
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
