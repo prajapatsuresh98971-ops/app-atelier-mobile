@@ -5,33 +5,79 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { QrCode, Camera, ArrowLeft } from "lucide-react";
+import { QrCode, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePairing } from "@/hooks/usePairing";
+import { QRCodeScanner } from "@/components/QRCodeScanner";
+import { PairingSuccessAnimation } from "@/components/PairingSuccessAnimation";
+import { toast } from "sonner";
 
 export default function QRScanner() {
   const navigate = useNavigate();
   const { validatePairingCode, isLoading } = usePairing();
   const [manualCode, setManualCode] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleQRScan = async (code: string) => {
+    if (isProcessing) return;
+    
+    try {
+      setIsProcessing(true);
+      const cleanCode = code.replace(/[^A-Z0-9]/g, '').toUpperCase();
+      
+      if (cleanCode.length !== 15) {
+        toast.error("Invalid QR code format");
+        setIsProcessing(false);
+        return;
+      }
+      
+      await validatePairingCode(cleanCode);
+      
+      // Show success animation
+      setShowSuccess(true);
+      toast.success("Pairing request sent!");
+      
+      // Wait for animation then navigate
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate('/parent/dashboard');
+      }, 2500);
+    } catch (error) {
+      console.error('QR scan pairing failed:', error);
+      setIsProcessing(false);
+    }
+  };
 
   const handlePairDevice = async () => {
     if (!manualCode.trim()) return;
     
     try {
-      // Clean and uppercase the code
+      setIsProcessing(true);
       const cleanCode = manualCode.replace(/[^A-Z0-9]/g, '').toUpperCase();
       
-      // Validate format
       if (cleanCode.length !== 15) {
+        toast.error("Invalid code format. Please enter a 15-character code.");
+        setIsProcessing(false);
         return;
       }
       
       await validatePairingCode(cleanCode);
       setDialogOpen(false);
-      navigate('/pairing/permissions');
+      
+      // Show success animation
+      setShowSuccess(true);
+      toast.success("Pairing request sent!");
+      
+      // Wait for animation then navigate
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate('/parent/dashboard');
+      }, 2500);
     } catch (error) {
-      console.error('Pairing failed:', error);
+      console.error('Manual pairing failed:', error);
+      setIsProcessing(false);
     }
   };
 
@@ -57,21 +103,23 @@ export default function QRScanner() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Camera Viewfinder */}
-              <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Camera className="h-16 w-16 text-muted-foreground" />
+              {/* Real QR Code Scanner */}
+              {!isProcessing ? (
+                <QRCodeScanner 
+                  onScan={handleQRScan}
+                  onError={(error) => {
+                    console.error("Scanner error:", error);
+                    toast.error("Camera access failed. Please use manual entry.");
+                  }}
+                />
+              ) : (
+                <div className="relative aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto" />
+                    <p className="text-sm text-muted-foreground">Processing pairing code...</p>
+                  </div>
                 </div>
-                {/* Scanning Overlay */}
-                <div className="absolute inset-0 border-4 border-primary rounded-lg m-8">
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary" />
-                </div>
-                {/* Scan Line Animation */}
-                <div className="absolute inset-x-8 top-8 h-1 bg-primary animate-pulse" />
-              </div>
+              )}
 
               <div className="text-center space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -105,9 +153,16 @@ export default function QRScanner() {
                       <Button 
                         className="w-full" 
                         onClick={handlePairDevice}
-                        disabled={isLoading || !manualCode.trim()}
+                        disabled={isLoading || isProcessing || !manualCode.trim()}
                       >
-                        {isLoading ? "Pairing..." : "Pair Device"}
+                        {isLoading || isProcessing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Pairing...
+                          </>
+                        ) : (
+                          "Pair Device"
+                        )}
                       </Button>
                     </div>
                   </DialogContent>
@@ -125,6 +180,9 @@ export default function QRScanner() {
           </Card>
         </div>
       </div>
+      
+      {/* Success Animation Overlay */}
+      {showSuccess && <PairingSuccessAnimation />}
     </Layout>
   );
 }
