@@ -19,8 +19,14 @@ export default function QRScanner() {
     if (!manualCode.trim()) return;
     
     try {
-      // Remove dashes from the code
-      const cleanCode = manualCode.replace(/-/g, '');
+      // Clean and uppercase the code
+      const cleanCode = manualCode.replace(/[^A-Z0-9]/g, '').toUpperCase();
+      
+      // Validate format
+      if (cleanCode.length !== 15) {
+        return;
+      }
+      
       await validatePairingCode(cleanCode);
       setDialogOpen(false);
       navigate('/pairing/permissions');
@@ -82,7 +88,7 @@ export default function QRScanner() {
                     <DialogHeader>
                       <DialogTitle>Enter Pairing Code</DialogTitle>
                       <DialogDescription>
-                        Enter the 15-digit code from your child's device
+                        Enter the 15-character alphanumeric code from your child's device
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -90,9 +96,9 @@ export default function QRScanner() {
                         <Label htmlFor="code">Pairing Code</Label>
                         <Input
                           id="code"
-                          placeholder="000-000-000-000-000"
+                          placeholder="ABCD-EFGH-JKLM-NPQ"
                           value={manualCode}
-                          onChange={(e) => setManualCode(e.target.value)}
+                          onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                           maxLength={19}
                         />
                       </div>

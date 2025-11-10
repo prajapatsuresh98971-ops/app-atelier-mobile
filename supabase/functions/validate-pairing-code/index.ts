@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const RequestSchema = z.object({
-  pairing_code: z.string().length(15, 'Invalid code format').regex(/^\d+$/, 'Invalid code format'),
+  pairing_code: z.string().length(15, 'Invalid code format').regex(/^[A-Z0-9]+$/, 'Invalid code format'),
 });
 
 // Rate limiting store (in production, use Redis)

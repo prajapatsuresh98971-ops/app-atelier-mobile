@@ -33,7 +33,8 @@ const RoleSelection = () => {
       setIsLoading(false);
     } else {
       toast.success("Role set successfully!");
-      navigate(selectedRole === "parent" ? "/parent/dashboard" : "/child/dashboard");
+      // Navigate directly to pairing screens
+      navigate(selectedRole === "parent" ? "/parent/qr-scanner" : "/child/qr-display");
     }
   };
 

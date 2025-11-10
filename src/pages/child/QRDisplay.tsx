@@ -125,7 +125,7 @@ const QRDisplay = () => {
             <div className="space-y-3">
               <div className="text-center">
                 <p className="text-sm font-medium text-muted-foreground mb-2">
-                  Or enter this 15-digit code manually:
+                  Or enter this 15-character code manually:
                 </p>
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-2xl font-mono font-bold tracking-wider">
