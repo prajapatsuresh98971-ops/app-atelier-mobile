@@ -80,6 +80,17 @@ export default {
             height: "0",
           },
         },
+        "scan-line": {
+          "0%": {
+            top: "2rem",
+          },
+          "50%": {
+            top: "calc(100% - 3rem)",
+          },
+          "100%": {
+            top: "2rem",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

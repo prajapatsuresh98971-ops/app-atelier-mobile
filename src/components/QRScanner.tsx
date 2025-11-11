@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { BrowserQRCodeReader } from "@zxing/browser";
+import { useState, useEffect } from "react";
+import { useZxing } from "react-zxing";
 import { Camera } from "lucide-react";
 
 interface QRCodeScannerProps {
@@ -8,62 +8,41 @@ interface QRCodeScannerProps {
 }
 
 export const QRCodeScanner = ({ onScan, onError }: QRCodeScannerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const controlsRef = useRef<any>(null);
+  const [hasScanned, setHasScanned] = useState(false);
+
+  const { ref } = useZxing({
+    onDecodeResult(result) {
+      if (!hasScanned) {
+        setHasScanned(true);
+        onScan(result.getText());
+      }
+    },
+    onError(err) {
+      if (err) {
+        const error = err as any;
+        if (error.name !== 'NotFoundException') {
+          const errorMessage = error.message || "Failed to access camera";
+          setError(errorMessage);
+          onError?.(errorMessage);
+        }
+      }
+    },
+  });
 
   useEffect(() => {
-    const initScanner = async () => {
+    // Request camera permission on mount
+    const requestCamera = async () => {
       try {
-        setIsScanning(true);
-        const codeReader = new BrowserQRCodeReader();
-
-        const videoInputDevices = await BrowserQRCodeReader.listVideoInputDevices();
-        
-        if (videoInputDevices.length === 0) {
-          throw new Error("No camera found on this device");
-        }
-
-        // Use the first available camera (usually back camera on mobile)
-        const selectedDeviceId = videoInputDevices[0].deviceId;
-
-        const controls = await codeReader.decodeFromVideoDevice(
-          selectedDeviceId,
-          videoRef.current!,
-          (result, error) => {
-            if (result) {
-              const scannedText = result.getText();
-              onScan(scannedText);
-              // Stop scanning after successful scan
-              if (controlsRef.current) {
-                controlsRef.current.stop();
-              }
-              setIsScanning(false);
-            }
-            if (error && error.name !== 'NotFoundException') {
-              console.error('QR Scanner error:', error);
-            }
-          }
-        );
-        
-        controlsRef.current = controls;
+        await navigator.mediaDevices.getUserMedia({ video: true });
       } catch (err: any) {
-        const errorMessage = err.message || "Failed to access camera";
+        const errorMessage = err.message || "Camera permission denied";
         setError(errorMessage);
         onError?.(errorMessage);
-        setIsScanning(false);
       }
     };
-
-    initScanner();
-
-    return () => {
-      if (controlsRef.current) {
-        controlsRef.current.stop();
-      }
-    };
-  }, [onScan, onError]);
+    requestCamera();
+  }, [onError]);
 
   if (error) {
     return (
@@ -82,12 +61,13 @@ export const QRCodeScanner = ({ onScan, onError }: QRCodeScannerProps) => {
   return (
     <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
       <video
-        ref={videoRef}
+        ref={ref}
         className="w-full h-full object-cover"
         autoPlay
         playsInline
+        muted
       />
-      {isScanning && (
+      {!error && (
         <>
           {/* Scanning Overlay */}
           <div className="absolute inset-0 border-4 border-primary rounded-lg m-8">
