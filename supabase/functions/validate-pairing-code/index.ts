@@ -104,6 +104,7 @@ serve(async (req) => {
       .select('*, profiles!device_pairings_child_id_fkey(name, email)')
       .eq('pairing_code', pairing_code)
       .eq('status', 'pending')
+      .eq('is_used', false)
       .gt('expires_at', new Date().toISOString())
       .maybeSingle();
 
@@ -115,10 +116,25 @@ serve(async (req) => {
       );
     }
 
+    // Revoke other active codes for this child
+    const { error: revokeError } = await supabaseClient
+      .rpc('revoke_child_pairing_codes', { 
+        _child_id: pairingData.child_id,
+        _except_pairing_id: pairingData.id 
+      });
+    
+    if (revokeError) {
+      console.error('[validate-pairing-code] Failed to revoke old codes:', revokeError);
+    }
+
     // Update the pairing with parent_id
     const { data: updatedPairing, error: updateError } = await supabaseClient
       .from('device_pairings')
-      .update({ parent_id: user.id })
+      .update({ 
+        parent_id: user.id,
+        is_used: true,
+        is_active: true,
+      })
       .eq('id', pairingData.id)
       .select('*, profiles!device_pairings_child_id_fkey(name, email)')
       .single();

@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting store (in-memory, resets on function restart)
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+const checkRateLimit = (userId: string): boolean => {
+  const now = Date.now();
+  const limit = rateLimitStore.get(userId);
+  
+  if (!limit || limit.resetAt < now) {
+    rateLimitStore.set(userId, { count: 1, resetAt: now + 60000 }); // 1 minute window
+    return true;
+  }
+  
+  if (limit.count >= 5) { // Max 5 generations per minute
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,6 +67,23 @@ serve(async (req) => {
       );
     }
 
+    // Check rate limit
+    if (!checkRateLimit(user.id)) {
+      console.warn('[generate-pairing-code] Rate limit exceeded:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Invalidate any existing unused codes for this child
+    const { error: revokeError } = await supabaseClient
+      .rpc('revoke_child_pairing_codes', { _child_id: user.id });
+    
+    if (revokeError) {
+      console.error('[generate-pairing-code] Failed to revoke old codes:', revokeError);
+    }
+
     // Generate pairing code using the database function
     const { data: codeData, error: codeError } = await supabaseClient
       .rpc('generate_pairing_code');
@@ -69,6 +106,8 @@ serve(async (req) => {
         parent_id: user.id, // Temporary, will be updated when parent scans
         pairing_code: pairingCode,
         status: 'pending',
+        is_used: false,
+        expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
       })
       .select()
       .single();

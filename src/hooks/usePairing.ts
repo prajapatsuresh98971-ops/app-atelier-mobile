@@ -6,6 +6,20 @@ export const usePairing = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const checkPairingStatus = async (pairingId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-pairing-status', {
+        body: { pairing_id: pairingId },
+      });
+      
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error('Failed to check pairing status:', error);
+      return null;
+    }
+  };
+
   const generatePairingCode = async () => {
     setIsLoading(true);
     try {
@@ -85,5 +99,6 @@ export const usePairing = () => {
     generatePairingCode,
     validatePairingCode,
     acceptPairing,
+    checkPairingStatus,
   };
 };

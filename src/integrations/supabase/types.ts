@@ -82,10 +82,12 @@ export type Database = {
           expires_at: string
           id: string
           is_active: boolean
+          is_used: boolean
           pairing_code: string
           parent_id: string
           permissions: Json | null
           status: Database["public"]["Enums"]["pairing_status"]
+          updated_at: string | null
         }
         Insert: {
           activated_at?: string | null
@@ -94,10 +96,12 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean
+          is_used?: boolean
           pairing_code: string
           parent_id: string
           permissions?: Json | null
           status?: Database["public"]["Enums"]["pairing_status"]
+          updated_at?: string | null
         }
         Update: {
           activated_at?: string | null
@@ -106,10 +110,12 @@ export type Database = {
           expires_at?: string
           id?: string
           is_active?: boolean
+          is_used?: boolean
           pairing_code?: string
           parent_id?: string
           permissions?: Json | null
           status?: Database["public"]["Enums"]["pairing_status"]
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -512,6 +518,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      revoke_child_pairing_codes: {
+        Args: { _child_id: string; _except_pairing_id?: string }
+        Returns: undefined
       }
     }
     Enums: {

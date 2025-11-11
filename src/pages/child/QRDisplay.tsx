@@ -2,25 +2,21 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, RefreshCw, Clock } from "lucide-react";
+import { Copy, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePairing } from "@/hooks/usePairing";
 import { useRealtimePairing } from "@/hooks/useRealtimePairing";
 import { QRCodeSVG } from "qrcode.react";
+import { PairingTimer } from "@/components/PairingTimer";
 
 const QRDisplay = () => {
   const { toast } = useToast();
   const { generatePairingCode, isLoading } = usePairing();
   const [pairingCode, setPairingCode] = useState("");
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  useRealtimePairing(() => {
-    toast({
-      title: "Pairing Status Updated",
-      description: "Check your dashboard for details",
-    });
-  });
+  useRealtimePairing();
 
   useEffect(() => {
     const loadPairingCode = async () => {
@@ -38,34 +34,13 @@ const QRDisplay = () => {
     loadPairingCode();
   }, []);
 
-  useEffect(() => {
-    if (!expiresAt) return;
-
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const expires = new Date(expiresAt);
-      const diff = Math.floor((expires.getTime() - now.getTime()) / 1000);
-      return Math.max(0, diff);
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
-      
-      if (remaining <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [expiresAt]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleExpire = () => {
+    toast({
+      title: "Code expired",
+      description: "Your pairing code has expired. Generating a new one...",
+      variant: "destructive",
+    });
+    handleRegenerateCode();
   };
 
   const handleCopyCode = () => {
@@ -77,6 +52,7 @@ const QRDisplay = () => {
   };
 
   const handleRegenerateCode = async () => {
+    setIsGenerating(true);
     try {
       const data = await generatePairingCode();
       const formattedCode = data.pairing_code.match(/.{1,3}/g)?.join('-') || data.pairing_code;
@@ -89,6 +65,13 @@ const QRDisplay = () => {
       });
     } catch (error) {
       console.error('Failed to regenerate code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate new code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -128,7 +111,7 @@ const QRDisplay = () => {
                   Or enter this 15-character code manually:
                 </p>
                 <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-2xl font-mono font-bold tracking-wider">
+                  <p className="text-2xl font-mono font-bold tracking-wider" data-testid="pairing-code">
                     {pairingCode}
                   </p>
                 </div>
@@ -146,20 +129,19 @@ const QRDisplay = () => {
             </div>
 
             {/* Timer */}
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Code expires in {formatTime(timeLeft)}</span>
-            </div>
+            {expiresAt && (
+              <PairingTimer expiresAt={expiresAt} onExpire={handleExpire} />
+            )}
 
             {/* Regenerate Button */}
             <Button
               variant="ghost"
               className="w-full"
               onClick={handleRegenerateCode}
-              disabled={timeLeft > 0 || isLoading}
+              disabled={isGenerating}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {isLoading ? "Generating..." : "Regenerate Code"}
+              <RefreshCw className={`h-4 w-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+              {isGenerating ? "Generating..." : "Regenerate Code"}
             </Button>
 
             {/* Instructions */}
