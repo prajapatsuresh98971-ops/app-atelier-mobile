@@ -5,15 +5,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { QrCode, Camera, ArrowLeft } from "lucide-react";
+import { QrCode, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePairing } from "@/hooks/usePairing";
+import { QRCodeScanner } from "@/components/QRScanner";
+import { toast } from "sonner";
 
 export default function QRScanner() {
   const navigate = useNavigate();
   const { validatePairingCode, isLoading } = usePairing();
   const [manualCode, setManualCode] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleQRScan = async (scannedCode: string) => {
+    setIsProcessing(true);
+    try {
+      // Clean and validate the scanned code
+      const cleanCode = scannedCode.replace(/[^A-Z0-9]/g, '').toUpperCase();
+      
+      if (cleanCode.length !== 15) {
+        toast.error("Invalid QR code format");
+        setIsProcessing(false);
+        return;
+      }
+      
+      await validatePairingCode(cleanCode);
+      
+      toast.success("Device paired successfully!");
+      setTimeout(() => {
+        navigate('/parent/dashboard');
+      }, 1500);
+    } catch (error) {
+      console.error('Pairing failed:', error);
+      setIsProcessing(false);
+    }
+  };
 
   const handlePairDevice = async () => {
     if (!manualCode.trim()) return;
@@ -24,12 +51,17 @@ export default function QRScanner() {
       
       // Validate format
       if (cleanCode.length !== 15) {
+        toast.error("Code must be exactly 15 characters");
         return;
       }
       
       await validatePairingCode(cleanCode);
       setDialogOpen(false);
-      navigate('/pairing/permissions');
+      
+      toast.success("Device paired successfully!");
+      setTimeout(() => {
+        navigate('/parent/dashboard');
+      }, 1500);
     } catch (error) {
       console.error('Pairing failed:', error);
     }
@@ -57,21 +89,17 @@ export default function QRScanner() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Camera Viewfinder */}
-              <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Camera className="h-16 w-16 text-muted-foreground" />
+              {/* QR Scanner */}
+              {isProcessing ? (
+                <div className="relative aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="h-16 w-16 mx-auto mb-4 text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground">Processing pairing...</p>
+                  </div>
                 </div>
-                {/* Scanning Overlay */}
-                <div className="absolute inset-0 border-4 border-primary rounded-lg m-8">
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary" />
-                </div>
-                {/* Scan Line Animation */}
-                <div className="absolute inset-x-8 top-8 h-1 bg-primary animate-pulse" />
-              </div>
+              ) : (
+                <QRCodeScanner onScan={handleQRScan} />
+              )}
 
               <div className="text-center space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -105,9 +133,9 @@ export default function QRScanner() {
                       <Button 
                         className="w-full" 
                         onClick={handlePairDevice}
-                        disabled={isLoading || !manualCode.trim()}
+                        disabled={isLoading || isProcessing || !manualCode.trim()}
                       >
-                        {isLoading ? "Pairing..." : "Pair Device"}
+                        {isLoading || isProcessing ? "Pairing..." : "Pair Device"}
                       </Button>
                     </div>
                   </DialogContent>
