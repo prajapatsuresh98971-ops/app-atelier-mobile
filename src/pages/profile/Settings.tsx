@@ -167,56 +167,23 @@ const Settings = () => {
 
     setIsDeleting(true);
     try {
-      // Delete all user data in correct order due to foreign key constraints
-      
-      // 1. Delete chat messages
-      await supabase.from('chat_messages').delete().or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
-      
-      // 2. Delete activity logs
-      await supabase.from('activity_logs').delete().eq('user_id', user.id);
-      
-      // 3. Delete location history
-      await supabase.from('location_history').delete().eq('user_id', user.id);
-      
-      // 4. Delete media records
-      await supabase.from('media_records').delete().eq('user_id', user.id);
-      
-      // 5. Delete geofences
-      await supabase.from('geofences').delete().or(`parent_id.eq.${user.id},child_id.eq.${user.id}`);
-      
-      // 6. Delete device pairings
-      await supabase.from('device_pairings').delete().or(`parent_id.eq.${user.id},child_id.eq.${user.id}`);
-      
-      // 7. Delete devices
-      await supabase.from('devices').delete().eq('user_id', user.id);
-      
-      // 8. Delete onboarding progress
-      await supabase.from('onboarding_progress').delete().eq('user_id', user.id);
-      
-      // 9. Delete report preferences
-      await supabase.from('report_preferences').delete().eq('user_id', user.id);
-      
-      // 10. Delete user role
-      await supabase.from('user_roles').delete().eq('user_id', user.id);
-      
-      // 11. Delete profile (this will cascade to other tables with foreign keys)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
+      // Call edge function to permanently delete account and all data
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
 
-      if (profileError) throw profileError;
+      if (error) throw error;
 
-      // 12. Delete auth user (admin API call would be needed for this)
-      // For now, we'll sign out and show a message
-      toast.success("Account data deleted successfully");
+      toast.success("Account and all data permanently deleted");
       
-      // Sign out and redirect
+      // Sign out and redirect (auth session is already invalidated server-side)
       await signOut();
       navigate('/onboarding/intro-1');
     } catch (error: any) {
       console.error('Error deleting account:', error);
-      toast.error(error.message || "Failed to delete account. Please contact support.");
+      toast.error(error.message || "Failed to delete account. Please try again or contact support.");
     } finally {
       setIsDeleting(false);
     }
