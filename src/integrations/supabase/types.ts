@@ -84,7 +84,7 @@ export type Database = {
           is_active: boolean
           is_used: boolean
           pairing_code: string
-          parent_id: string
+          parent_id: string | null
           permissions: Json | null
           status: Database["public"]["Enums"]["pairing_status"]
           updated_at: string | null
@@ -98,7 +98,7 @@ export type Database = {
           is_active?: boolean
           is_used?: boolean
           pairing_code: string
-          parent_id: string
+          parent_id?: string | null
           permissions?: Json | null
           status?: Database["public"]["Enums"]["pairing_status"]
           updated_at?: string | null
@@ -112,7 +112,7 @@ export type Database = {
           is_active?: boolean
           is_used?: boolean
           pairing_code?: string
-          parent_id?: string
+          parent_id?: string | null
           permissions?: Json | null
           status?: Database["public"]["Enums"]["pairing_status"]
           updated_at?: string | null

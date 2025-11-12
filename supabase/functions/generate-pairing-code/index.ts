@@ -103,7 +103,7 @@ serve(async (req) => {
       .from('device_pairings')
       .insert({
         child_id: user.id,
-        parent_id: user.id, // Temporary, will be updated when parent scans
+        parent_id: null, // Will be set when parent validates the code
         pairing_code: pairingCode,
         status: 'pending',
         is_used: false,
