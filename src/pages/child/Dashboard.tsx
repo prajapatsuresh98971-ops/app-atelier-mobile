@@ -2,15 +2,36 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, Settings, HelpCircle } from "lucide-react";
+import { Shield, CheckCircle2, Settings, HelpCircle, Camera, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useMediaStatus } from "@/hooks/useMediaStatus";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ChildDashboard = () => {
   const navigate = useNavigate();
+  const { cameraActive, micActive } = useMediaStatus();
 
   return (
     <Layout title="My Dashboard">
       <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Active Media Access Alert */}
+        {(cameraActive || micActive) && (
+          <Alert className="border-accent bg-accent/10">
+            <div className="flex items-center gap-3">
+              {cameraActive && <Camera className="h-5 w-5 text-accent animate-pulse" />}
+              {micActive && <Mic className="h-5 w-5 text-accent animate-pulse" />}
+              <AlertDescription className="text-sm font-medium">
+                Your parent is currently accessing your{" "}
+                {cameraActive && micActive
+                  ? "camera and microphone"
+                  : cameraActive
+                  ? "camera"
+                  : "microphone"}
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+        
         {/* Connection Status */}
         <Card className="border-primary/20">
           <CardHeader>
