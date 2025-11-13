@@ -2,8 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Lock, Unlock, MapPin, Eye, Bell } from "lucide-react";
+import { Lock, Unlock, MapPin, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { PermissionStatusIndicator } from "./PermissionStatusIndicator";
 
 interface PairedChildCardProps {
   child: {
@@ -12,6 +13,13 @@ interface PairedChildCardProps {
     email: string;
     is_online: boolean;
     last_seen: string;
+    permissions?: {
+      camera?: boolean;
+      location?: boolean;
+      microphone?: boolean;
+      screen_recording?: boolean;
+      notifications?: boolean;
+    } | null;
   };
   onViewLocation: () => void;
   onViewActivity: () => void;
@@ -58,6 +66,14 @@ export const PairedChildCard = ({
             <p className="text-xs text-muted-foreground">
               Last seen {formatDistanceToNow(new Date(child.last_seen), { addSuffix: true })}
             </p>
+
+            {/* Permission Status */}
+            {child.permissions && (
+              <div className="pt-1">
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Permissions</p>
+                <PermissionStatusIndicator permissions={child.permissions} compact />
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button

@@ -20,6 +20,7 @@ import { useRealtimePairing } from "@/hooks/useRealtimePairing";
 import { PairedChildCard } from "@/components/PairedChildCard";
 import { DataExportDialog } from "@/components/DataExportDialog";
 import { ParentTutorial } from "@/components/ParentTutorial";
+import { PermissionStatusIndicator } from "@/components/PermissionStatusIndicator";
 
 export default function ParentDashboard() {
   const navigate = useNavigate();
@@ -33,10 +34,10 @@ export default function ParentDashboard() {
     if (!user) return;
 
     try {
-      // First get all active pairings
+      // Get all active pairings with permissions
       const { data: pairings, error: pairingsError } = await supabase
         .from('device_pairings')
-        .select('child_id')
+        .select('child_id, permissions')
         .eq('parent_id', user.id)
         .eq('is_active', true)
         .eq('status', 'active');
@@ -70,6 +71,7 @@ export default function ParentDashboard() {
       // Combine the data
       const formattedChildren = profiles?.map((profile: any) => {
         const device = devices?.find((d: any) => d.user_id === profile.id);
+        const pairing = pairings.find((p: any) => p.child_id === profile.id);
         return {
           id: profile.id,
           name: profile.name || 'Unknown',
@@ -77,6 +79,7 @@ export default function ParentDashboard() {
           profile_picture_url: profile.profile_picture_url,
           is_online: device?.is_online || false,
           last_seen: device?.last_seen || new Date().toISOString(),
+          permissions: pairing?.permissions || null,
         };
       }) || [];
 
@@ -146,6 +149,32 @@ export default function ParentDashboard() {
         },
         () => {
           fetchRecentActivity();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Listen to permission updates in real-time
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('permission-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'device_pairings',
+          filter: `parent_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Permission update received:', payload);
+          fetchPairedChildren();
         }
       )
       .subscribe();

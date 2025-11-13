@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Camera, MapPin, Mic, Monitor, AlertCircle } from "lucide-react";
+import { Camera, MapPin, Mic, Monitor, AlertCircle, Bell } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePairing } from "@/hooks/usePairing";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useBrowserPermissions } from "@/hooks/useBrowserPermissions";
 
 interface Permission {
   id: string;
@@ -48,6 +49,8 @@ const Permissions = () => {
     fetchPendingPairing();
   }, [user, role]);
 
+  const { requestAllPermissions, isRequesting } = useBrowserPermissions();
+
   const [permissions, setPermissions] = useState<Permission[]>([
     {
       id: "camera",
@@ -77,6 +80,13 @@ const Permissions = () => {
       icon: Monitor,
       enabled: true,
     },
+    {
+      id: "notifications",
+      name: "Push Notifications",
+      description: "Receive alerts and updates from parent",
+      icon: Bell,
+      enabled: true,
+    },
   ]);
 
   const handleTogglePermission = (id: string) => {
@@ -95,11 +105,22 @@ const Permissions = () => {
       return;
     }
 
-    const permissionsObj = {
+    // First, request browser permissions for enabled items
+    const browserPermissions = await requestAllPermissions({
       camera: permissions.find(p => p.id === "camera")?.enabled || false,
-      location: permissions.find(p => p.id === "location")?.enabled || false,
       microphone: permissions.find(p => p.id === "microphone")?.enabled || false,
+      location: permissions.find(p => p.id === "location")?.enabled || false,
       screen_recording: permissions.find(p => p.id === "screen")?.enabled || false,
+      notifications: permissions.find(p => p.id === "notifications")?.enabled || false,
+    });
+
+    // Store the actual granted permissions in Supabase
+    const permissionsObj = {
+      camera: browserPermissions.camera || false,
+      location: browserPermissions.location || false,
+      microphone: browserPermissions.microphone || false,
+      screen_recording: browserPermissions.screen_recording || false,
+      notifications: browserPermissions.notifications || false,
     };
 
     try {
@@ -193,9 +214,9 @@ const Permissions = () => {
               onClick={handleGrantPermissions}
               className="flex-1"
               size="lg"
-              disabled={isLoading}
+              disabled={isLoading || isRequesting}
             >
-              {isLoading ? "Saving..." : "Grant Permissions"}
+              {isRequesting ? "Requesting Permissions..." : isLoading ? "Saving..." : "Grant Permissions"}
             </Button>
             <Button
               onClick={handleSkip}
