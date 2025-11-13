@@ -12,6 +12,7 @@ const PermissionsSchema = z.object({
   location: z.boolean(),
   microphone: z.boolean(),
   screen_recording: z.boolean(),
+  notifications: z.boolean().optional(),
 });
 
 const RequestSchema = z.object({
@@ -87,6 +88,7 @@ serve(async (req) => {
           location: false,
           microphone: false,
           screen_recording: false,
+          notifications: false,
         },
       })
       .eq('id', pairing_id)
