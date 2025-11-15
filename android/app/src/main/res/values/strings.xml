@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Permission Wizard</string>
+    <string name="enable">Enable</string>
+    <string name="enabled">Enabled</string>
+    <string name="not_enabled">Not Enabled</string>
+    <string name="complete_setup">Complete Setup</string>
+</resources>
